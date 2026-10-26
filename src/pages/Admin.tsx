@@ -53,10 +53,12 @@ export default function Admin() {
     }
     // El selector trae "" (gratis), el id de un vivo, o "pack:YYYY-MM" (regalo del pack).
     const destino = String(f.get("vivo") ?? "");
-    const tipo = !destino ? "gratis" : destino.startsWith("pack:") ? "pack" : "semana";
+    const tipo = !destino ? "gratis" : destino === "individual" ? "individual" : destino.startsWith("pack:") ? "pack" : "semana";
+    if (tipo === "individual" && !Number(f.get("precio"))) return setMsg("Poné el precio de la meditación.");
     const { error } = await sb!.from("meditaciones").insert({
       titulo: f.get("titulo"), minutos: Number(f.get("minutos")), tipo,
       vivo_id: tipo === "semana" ? destino : null, mes_pack: tipo === "pack" ? destino.slice(5) : null,
+      precio: tipo === "individual" ? Number(f.get("precio")) : null,
       archivo: ruta, formato: archivo?.type.startsWith("video") ? "video" : "audio", publicada: f.get("publicada") === "on",
     });
     if (error) return setMsg("No se pudo guardar la meditación.");
@@ -83,11 +85,13 @@ export default function Admin() {
         <label htmlFor="m-titulo">Título</label><input id="m-titulo" name="titulo" required />
         <label htmlFor="m-min">Minutos</label><input id="m-min" name="minutos" type="number" min={1} max={45} required />
         <label htmlFor="m-vivo">¿Quién la recibe?</label>
-        <select id="m-vivo" name="vivo" defaultValue="">
+        <select id="m-vivo" name="vivo" defaultValue="individual">
+          <option value="individual">Se vende sola (individual)</option>
           <option value="">Ninguno: es gratis</option>
           {[...new Set(vivos.map((v) => v.mes))].map((mes) => <option key={mes} value={"pack:" + mes}>Regalo del pack de {nombreMes(mes)}</option>)}
           {vivos.map((v) => <option key={v.id} value={v.id}>Corta del vivo del {new Date(v.empieza).toLocaleDateString("es-AR")} · {v.titulo}</option>)}
         </select>
+        <label htmlFor="m-precio">Precio si se vende sola (ARS)</label><input id="m-precio" name="precio" type="number" min={1} defaultValue={10000} />
         <label htmlFor="m-arch">Audio o video</label><input id="m-arch" name="archivo" type="file" accept="audio/*,video/*" />
         <label className="check"><input name="publicada" type="checkbox" defaultChecked /> Publicarla ya</label>
         <button className="btn">Guardar meditación</button>
@@ -117,7 +121,7 @@ export default function Admin() {
           {meds.map((m) => (
             <div key={m.id} className="item">
               <span className="insignia"><span><b>{m.minutos}</b><small>min</small></span></span>
-              <span className="item-cuerpo"><span className="item-titulo">{m.titulo}</span><span className="meta">{m.tipo === "gratis" ? "Gratis" : m.tipo === "pack" ? "Regalo del pack de " + nombreMes(m.mes_pack!) : "Corta de la semana"}{m.archivo ? "" : " · sin archivo"}</span></span>
+              <span className="item-cuerpo"><span className="item-titulo">{m.titulo}</span><span className="meta">{m.tipo === "gratis" ? "Gratis" : m.tipo === "individual" ? "Individual · " + ars(m.precio!) : m.tipo === "pack" ? "Regalo del pack de " + nombreMes(m.mes_pack!) : "Corta de la semana"}{m.archivo ? "" : " · sin archivo"}</span></span>
               <button className="btn chico borde" onClick={() => publicar(m)}>{m.publicada ? "Ocultar" : "Publicar"}</button>
             </div>
           ))}

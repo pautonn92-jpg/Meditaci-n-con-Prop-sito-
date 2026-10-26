@@ -110,11 +110,11 @@ export default function Inicio() {
           {lista.map(({ m, abierta }) => {
             const v = vivoDe(m.vivo_id);
             return (
-              <button key={m.id} className="item" onClick={() => abierta ? setSonando(m) : m.tipo === "pack" ? comprar("pack:" + m.mes_pack) : v && comprar("vivo:" + v.id)}>
+              <button key={m.id} className="item" onClick={() => abierta ? setSonando(m) : m.tipo === "individual" ? comprar("med:" + m.id) : m.tipo === "pack" ? comprar("pack:" + m.mes_pack) : v && comprar("vivo:" + v.id)}>
                 <span className="insignia"><span><b>{m.minutos}</b><small>min</small></span></span>
                 <span className="item-cuerpo"><span className="item-titulo">{m.titulo}</span>
-                  <span className="meta">{m.tipo === "gratis" ? "Gratis" : m.tipo === "pack" ? "Regalo del pack de " + nombreMes(m.mes_pack!) : v ? "Semana del " + dia(v.empieza).getDate() + " de " + nombreMes(v.mes) : ""}</span></span>
-                <span className={"tag " + (abierta ? "" : "candado")}>{m.tipo === "gratis" ? "Gratis" : abierta ? "Tuya" : "Bloqueada"}</span>
+                  <span className="meta">{m.tipo === "gratis" ? "Gratis" : m.tipo === "individual" ? "Grabación de un vivo con Reiki" : m.tipo === "pack" ? "Regalo del pack de " + nombreMes(m.mes_pack!) : v ? "Semana del " + dia(v.empieza).getDate() + " de " + nombreMes(v.mes) : ""}</span></span>
+                <span className={"tag " + (abierta ? "" : "candado")}>{m.tipo === "gratis" ? "Gratis" : abierta ? "Tuya" : m.tipo === "individual" ? ars(m.precio!) : "Bloqueada"}</span>
               </button>
             );
           })}
@@ -122,7 +122,7 @@ export default function Inicio() {
         </div>
       </section>
 
-      {sonando && <Reproductor med={sonando} subtitulo={sonando.tipo === "gratis" ? "Gratis" : "Meditación de la semana"} onCerrar={() => setSonando(null)} />}
+      {sonando && <Reproductor med={sonando} subtitulo={sonando.tipo === "gratis" ? "Gratis" : sonando.tipo === "semana" ? "Meditación de la semana" : "Tu meditación"} onCerrar={() => setSonando(null)} />}
     </>
   );
 }

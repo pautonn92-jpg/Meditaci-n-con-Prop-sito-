@@ -1,5 +1,5 @@
 // Crea una orden y una preferencia de Mercado Pago (Checkout Pro).
-// Recibe { producto: "vivo:<id>" | "pack:<YYYY-MM>" } y devuelve { url } para redirigir al pago.
+// Recibe { producto: "vivo:<id>" | "pack:<YYYY-MM>" | "med:<id>" } y devuelve { url } para redirigir al pago.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const cors = {
@@ -33,6 +33,11 @@ Deno.serve(async (req) => {
     if (!count) return json({ error: "Todavía no hay vivos cargados para ese mes." }, 404);
     titulo = `Pack del mes ${ref} (${count} vivos)`;
     monto = precio("pack_por_vivo") * count;
+  } else if (tipo === "med") {
+    const { data: med } = await admin.from("meditaciones").select("titulo, precio").eq("id", ref).eq("tipo", "individual").eq("publicada", true).single();
+    if (!med) return json({ error: "Esa meditación no está a la venta." }, 404);
+    titulo = `Meditación: ${med.titulo}`;
+    monto = med.precio;
   } else {
     return json({ error: "Producto inválido." }, 400);
   }

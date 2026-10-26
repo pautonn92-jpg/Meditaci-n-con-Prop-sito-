@@ -43,6 +43,11 @@ Deno.serve(async (req) => {
   if (Number(pago.transaction_amount) < orden.monto) return new Response("monto incorrecto", { status: 400 });
 
   const [prod, ref] = orden.producto.split(":");
+  if (prod === "med") {
+    await db.from("meditaciones_compradas").upsert({ user_id: orden.user_id, meditacion_id: ref, orden_id: orden.id }, { onConflict: "user_id,meditacion_id", ignoreDuplicates: true });
+    await db.from("ordenes").update({ estado: "aprobada", mp_pago_id: pagoId }).eq("id", orden.id);
+    return new Response("ok");
+  }
   const { data: vivos } = prod === "vivo"
     ? await db.from("vivos").select("id").eq("id", ref)
     : await db.from("vivos").select("id").eq("mes", ref);
