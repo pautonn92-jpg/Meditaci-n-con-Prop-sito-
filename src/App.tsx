@@ -12,6 +12,7 @@ export const useSesion = () => useContext(SesionCtx);
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
+  const [esAdmin, setEsAdmin] = useState(false);
 
   useEffect(() => {
     if (!sb) return;
@@ -20,6 +21,11 @@ export default function App() {
     return () => data.subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!sb || !session) { setEsAdmin(false); return; }
+    sb.rpc("is_admin").then(({ data }) => setEsAdmin(!!data));
+  }, [session]);
+
   return (
     <SesionCtx.Provider value={session}>
       <BrowserRouter>
@@ -27,7 +33,7 @@ export default function App() {
           <header className="arriba">
             <Link to="/" className="marca">Meditación con propósito</Link>
             {demo ? <span className="meta">Demostración</span>
-              : session ? <button className="link" onClick={() => sb!.auth.signOut()}>Salir</button>
+              : session ? <span className="fila">{esAdmin && <Link to="/admin" className="link">Panel</Link>}<button className="link" onClick={() => sb!.auth.signOut()}>Salir</button></span>
               : <Link to="/entrar" className="link">Entrar</Link>}
           </header>
           <Routes>
