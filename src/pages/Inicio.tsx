@@ -1,0 +1,126 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSesion } from "../App";
+import Reproductor from "../components/Reproductor";
+import { ars, cargarAccesos, cargarCatalogo, crearPago, demo, linkDelVivo, nombreMes, type Meditacion, type Precios, type Vivo } from "../lib/api";
+
+const FILTROS = [{ id: 99, label: "Todas" }, { id: 5, label: "Hasta 5 min" }, { id: 10, label: "Hasta 10 min" }, { id: 30, label: "Hasta 30 min" }];
+const dia = (iso: string) => new Date(iso);
+const hora = (iso: string) => dia(iso).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Argentina/Buenos_Aires" });
+
+export default function Inicio() {
+  const session = useSesion();
+  const navigate = useNavigate();
+  const [vivos, setVivos] = useState<Vivo[]>([]);
+  const [meds, setMeds] = useState<Meditacion[]>([]);
+  const [precios, setPrecios] = useState<Precios>({ vivo: 0, pack_por_vivo: 0 });
+  const [accesos, setAccesos] = useState<Set<string>>(new Set());
+  const [links, setLinks] = useState<Record<string, string>>({});
+  const [filtro, setFiltro] = useState(99);
+  const [sonando, setSonando] = useState<Meditacion | null>(null);
+  const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    cargarCatalogo().then((c) => { setVivos(c.vivos); setMeds(c.meditaciones); setPrecios(c.precios); setCargando(false); });
+  }, []);
+  useEffect(() => { cargarAccesos(session).then(setAccesos); }, [session]);
+  useEffect(() => {
+    [...accesos].forEach((id) => linkDelVivo(id).then((l) => l && setLinks((x) => ({ ...x, [id]: l }))));
+  }, [accesos]);
+
+  // El pack es el del primer mes que todavía tiene vivos por delante.
+  const proximos = vivos.filter((v) => dia(v.empieza).getTime() > Date.now() - 3 * 3600e3);
+  const mes = proximos[0]?.mes ?? vivos[0]?.mes;
+  const vivosMes = vivos.filter((v) => v.mes === mes);
+  const tienePack = vivosMes.length > 0 && vivosMes.every((v) => accesos.has(v.id));
+  const vivoDe = (id: string | null) => vivos.find((v) => v.id === id);
+
+  const lista = useMemo(() => meds
+    .filter((m) => m.minutos <= filtro)
+    .map((m) => ({ m, abierta: m.tipo === "gratis" || accesos.has(m.vivo_id!) }))
+    .sort((a, b) => Number(b.abierta) - Number(a.abierta)), [meds, filtro, accesos]);
+
+  const comprar = async (producto: string) => {
+    setError("");
+    if (!demo && !session) { navigate("/entrar"); return; }
+    try {
+      const destino = await crearPago(producto, vivos);
+      if (destino.startsWith("http")) window.location.href = destino; else navigate(destino);
+    } catch (e) { setError((e as Error).message); }
+  };
+
+  if (cargando) return <p className="lead">Cargando…</p>;
+
+  return (
+    <>
+      <p className="lead">Meditaciones en vivo con Reiki cada viernes, y meditaciones cortas para el resto de la semana.</p>
+      {error && <p className="aviso">{error}</p>}
+
+      {vivosMes.length > 0 && (
+        <section className="pack">
+          <span className="eyebrow">Pack de {nombreMes(mes!)}</span>
+          <h2>Todo el mes en calma</h2>
+          <ul>
+            <li>Los {vivosMes.length} vivos de los viernes, con Reiki mientras meditás</li>
+            <li>La meditación corta de cada semana, para siempre</li>
+          </ul>
+          <div className="fila">
+            {tienePack ? <span className="tuyo">Ya tenés el pack de {nombreMes(mes!)}</span> : <>
+              <span className="precio">{ars(precios.pack_por_vivo * vivosMes.length)}<s>{ars(precios.vivo * vivosMes.length)}</s></span>
+              <button className="btn dorado" onClick={() => comprar("pack:" + mes)}>Comprar el pack</button>
+            </>}
+          </div>
+        </section>
+      )}
+
+      <section>
+        <h2>Vivos de {nombreMes(mes ?? "2026-01")}</h2>
+        {vivosMes.length === 0 && <p className="lead">Todavía no hay vivos cargados para este mes.</p>}
+        <div className="semanas">
+          {vivosMes.map((v) => {
+            const on = accesos.has(v.id);
+            const corta = meds.find((m) => m.vivo_id === v.id);
+            return (
+              <div className="semana" key={v.id}>
+                <div className="fecha"><small>vie</small><b>{dia(v.empieza).getDate()}</b><small>{dia(v.empieza).toLocaleDateString("es-AR", { month: "short" })}</small></div>
+                <div className="semana-cuerpo">
+                  <div><div className="semana-titulo">{v.titulo}</div><div className="meta">{hora(v.empieza)} h · {v.duracion_min} min en vivo · Reiki</div></div>
+                  <div className="accesos">
+                    <span className={on ? "on" : ""}>{on ? "Lugar reservado" : "Vivo sin reservar"}</span>
+                    {corta && <span className={on ? "on" : ""}>Corta: {corta.titulo} ({corta.minutos} min)</span>}
+                  </div>
+                  {on && links[v.id] && <a className="btn chico" href={links[v.id]} target="_blank" rel="noreferrer">Entrar al vivo</a>}
+                  {!on && <div className="fila"><span className="precio chico">{ars(precios.vivo)}</span><button className="btn chico borde" onClick={() => comprar("vivo:" + v.id)}>Reservar este vivo</button></div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section>
+        <h2>Mis meditaciones</h2>
+        <div className="chips">
+          {FILTROS.map((f) => <button key={f.id} className="chip" aria-pressed={filtro === f.id} onClick={() => setFiltro(f.id)}>{f.label}</button>)}
+        </div>
+        <div className="lista">
+          {lista.map(({ m, abierta }) => {
+            const v = vivoDe(m.vivo_id);
+            return (
+              <button key={m.id} className="item" onClick={() => abierta ? setSonando(m) : v && comprar("vivo:" + v.id)}>
+                <span className="insignia"><span><b>{m.minutos}</b><small>min</small></span></span>
+                <span className="item-cuerpo"><span className="item-titulo">{m.titulo}</span>
+                  <span className="meta">{m.tipo === "gratis" ? "Gratis" : v ? "Semana del " + dia(v.empieza).getDate() + " de " + nombreMes(v.mes) : ""}</span></span>
+                <span className={"tag " + (abierta ? "" : "candado")}>{m.tipo === "gratis" ? "Gratis" : abierta ? "Tuya" : "Bloqueada"}</span>
+              </button>
+            );
+          })}
+          {lista.length === 0 && <p className="lead">No hay meditaciones de ese largo todavía.</p>}
+        </div>
+      </section>
+
+      {sonando && <Reproductor med={sonando} subtitulo={sonando.tipo === "gratis" ? "Gratis" : "Meditación de la semana"} onCerrar={() => setSonando(null)} />}
+    </>
+  );
+}
