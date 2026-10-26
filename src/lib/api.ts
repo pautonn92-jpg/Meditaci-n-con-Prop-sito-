@@ -21,8 +21,7 @@ const DEMO_VIVOS: Vivo[] = [6, 13, 20, 27].map((d, i) => ({
   titulo: ["Soltar lo que pesa", "Agradecer lo simple", "Descanso profundo", "Volver a mí"][i],
 }));
 const DEMO_MEDS: Meditacion[] = [
-  ["Respiración 4-6", 3, "gratis", null], ["Pausa de 5 minutos", 5, "gratis", null],
-  ["Soltar la semana", 10, "semana", "v0"], ["Tres respiraciones de gratitud", 5, "semana", "v1"],
+  ["Limpieza energética", 38, "gratis", null], ["Chakra raíz", 34, "semana", "v0"], ["Tres respiraciones de gratitud", 5, "semana", "v1"],
   ["Cuerpo liviano para dormir", 10, "semana", "v2"], ["Hablarme con cariño", 10, "semana", "v3"],
 ].map(([titulo, minutos, tipo, vivo_id], i) => ({
   id: "m" + i, titulo: titulo as string, minutos: minutos as number, tipo: tipo as Meditacion["tipo"],

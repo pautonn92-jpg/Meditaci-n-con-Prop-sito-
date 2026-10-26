@@ -4,7 +4,7 @@ import { useSesion } from "../App";
 import Reproductor from "../components/Reproductor";
 import { ars, cargarAccesos, cargarCatalogo, crearPago, demo, linkDelVivo, nombreMes, type Meditacion, type Precios, type Vivo } from "../lib/api";
 
-const FILTROS = [{ id: 99, label: "Todas" }, { id: 5, label: "Hasta 5 min" }, { id: 10, label: "Hasta 10 min" }, { id: 30, label: "Hasta 30 min" }];
+const FILTROS = [{ id: 99, label: "Todas" }, { id: 5, label: "Hasta 5 min" }, { id: 10, label: "Hasta 10 min" }, { id: 30, label: "Hasta 30 min" }, { id: 45, label: "Hasta 45 min" }];
 const dia = (iso: string) => new Date(iso);
 const hora = (iso: string) => dia(iso).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Argentina/Buenos_Aires" });
 

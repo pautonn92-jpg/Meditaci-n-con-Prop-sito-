@@ -37,7 +37,7 @@ create table public.meditaciones (
   id uuid primary key default gen_random_uuid(),
   titulo text not null,
   descripcion text,
-  minutos integer not null check (minutos between 1 and 30),
+  minutos integer not null check (minutos between 1 and 45),
   tipo text not null check (tipo in ('gratis', 'semana')),
   vivo_id uuid references public.vivos(id) on delete set null,
   archivo text,                -- ruta dentro del bucket "meditaciones"

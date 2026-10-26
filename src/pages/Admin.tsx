@@ -78,7 +78,7 @@ export default function Admin() {
       <form className="form" onSubmit={nuevaMed}>
         <h2>Subir meditación</h2>
         <label htmlFor="m-titulo">Título</label><input id="m-titulo" name="titulo" required />
-        <label htmlFor="m-min">Minutos</label><input id="m-min" name="minutos" type="number" min={1} max={30} required />
+        <label htmlFor="m-min">Minutos</label><input id="m-min" name="minutos" type="number" min={1} max={45} required />
         <label htmlFor="m-vivo">Es la corta de la semana de…</label>
         <select id="m-vivo" name="vivo" defaultValue="">
           <option value="">Ninguno: es gratis</option>
