@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     .from("ordenes").insert({ user_id: user.id, producto, monto }).select("id").single();
   if (error) return json({ error: "No se pudo crear la orden." }, 500);
 
-  const sitio = Deno.env.get("SITIO_URL")!;
+  const sitio = Deno.env.get("SITIO_URL") ?? "https://meditacion-con-proposito.netlify.app";
   const res = await fetch("https://api.mercadopago.com/checkout/preferences", {
     method: "POST",
     headers: { Authorization: `Bearer ${Deno.env.get("MP_ACCESS_TOKEN")}`, "Content-Type": "application/json" },

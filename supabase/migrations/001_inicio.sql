@@ -22,9 +22,17 @@ create table public.vivos (
   id uuid primary key default gen_random_uuid(),
   titulo text not null,
   empieza timestamptz not null,
-  mes text generated always as (to_char(empieza at time zone 'America/Argentina/Buenos_Aires', 'YYYY-MM')) stored,
+  mes text not null,            -- 'YYYY-MM' en hora argentina, lo completa el trigger
   duracion_min integer not null default 40
 );
+
+create or replace function public.poner_mes_vivo() returns trigger language plpgsql set search_path = public as $$
+begin
+  new.mes := to_char(new.empieza at time zone 'America/Argentina/Buenos_Aires', 'YYYY-MM');
+  return new;
+end $$;
+create trigger vivos_mes before insert or update of empieza on public.vivos
+  for each row execute function public.poner_mes_vivo();
 
 -- Link de la videollamada, aparte para que solo lo vea quien pagó.
 create table public.links_vivos (
