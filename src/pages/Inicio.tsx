@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSesion } from "../App";
 import Reproductor from "../components/Reproductor";
-import { ars, cargarAccesos, cargarCatalogo, crearPago, demo, linkDelVivo, nombreMes, type Meditacion, type Precios, type Vivo } from "../lib/api";
+import { ars, cargarAccesos, cargarCatalogo, crearPago, demo, habilitada, linkDelVivo, nombreMes, type Meditacion, type Precios, type Vivo } from "../lib/api";
 
 const FILTROS = [{ id: 99, label: "Todas" }, { id: 5, label: "Hasta 5 min" }, { id: 10, label: "Hasta 10 min" }, { id: 30, label: "Hasta 30 min" }, { id: 45, label: "Hasta 45 min" }];
 const dia = (iso: string) => new Date(iso);
@@ -33,12 +33,13 @@ export default function Inicio() {
   const proximos = vivos.filter((v) => dia(v.empieza).getTime() > Date.now() - 3 * 3600e3);
   const mes = proximos[0]?.mes ?? vivos[0]?.mes;
   const vivosMes = vivos.filter((v) => v.mes === mes);
-  const tienePack = vivosMes.length > 0 && vivosMes.every((v) => accesos.has(v.id));
+  const tienePack = accesos.has("pack:" + mes) || (vivosMes.length > 0 && vivosMes.every((v) => accesos.has(v.id)));
+  const regalos = meds.filter((m) => m.tipo === "pack" && m.mes_pack === mes);
   const vivoDe = (id: string | null) => vivos.find((v) => v.id === id);
 
   const lista = useMemo(() => meds
     .filter((m) => m.minutos <= filtro)
-    .map((m) => ({ m, abierta: m.tipo === "gratis" || accesos.has(m.vivo_id!) }))
+    .map((m) => ({ m, abierta: habilitada(m, accesos) }))
     .sort((a, b) => Number(b.abierta) - Number(a.abierta)), [meds, filtro, accesos]);
 
   const comprar = async (producto: string) => {
@@ -64,6 +65,7 @@ export default function Inicio() {
           <ul>
             <li>Los {vivosMes.length} vivos de los viernes, con Reiki mientras meditás</li>
             <li>La meditación corta de cada semana, para siempre</li>
+            {regalos.map((m) => <li key={m.id}>De regalo: {m.titulo} ({m.minutos} min)</li>)}
           </ul>
           <div className="fila">
             {tienePack ? <span className="tuyo">Ya tenés el pack de {nombreMes(mes!)}</span> : <>
@@ -108,10 +110,10 @@ export default function Inicio() {
           {lista.map(({ m, abierta }) => {
             const v = vivoDe(m.vivo_id);
             return (
-              <button key={m.id} className="item" onClick={() => abierta ? setSonando(m) : v && comprar("vivo:" + v.id)}>
+              <button key={m.id} className="item" onClick={() => abierta ? setSonando(m) : m.tipo === "pack" ? comprar("pack:" + m.mes_pack) : v && comprar("vivo:" + v.id)}>
                 <span className="insignia"><span><b>{m.minutos}</b><small>min</small></span></span>
                 <span className="item-cuerpo"><span className="item-titulo">{m.titulo}</span>
-                  <span className="meta">{m.tipo === "gratis" ? "Gratis" : v ? "Semana del " + dia(v.empieza).getDate() + " de " + nombreMes(v.mes) : ""}</span></span>
+                  <span className="meta">{m.tipo === "gratis" ? "Gratis" : m.tipo === "pack" ? "Regalo del pack de " + nombreMes(m.mes_pack!) : v ? "Semana del " + dia(v.empieza).getDate() + " de " + nombreMes(v.mes) : ""}</span></span>
                 <span className={"tag " + (abierta ? "" : "candado")}>{m.tipo === "gratis" ? "Gratis" : abierta ? "Tuya" : "Bloqueada"}</span>
               </button>
             );

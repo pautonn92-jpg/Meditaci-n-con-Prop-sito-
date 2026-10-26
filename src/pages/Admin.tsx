@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSesion } from "../App";
-import { ars, sb, type Meditacion, type Vivo } from "../lib/api";
+import { ars, nombreMes, sb, type Meditacion, type Vivo } from "../lib/api";
 
 // Panel de Paula: cargar vivos, subir meditaciones y cambiar precios.
 export default function Admin() {
@@ -51,9 +51,12 @@ export default function Admin() {
       const { error } = await sb!.storage.from("meditaciones").upload(ruta, archivo);
       if (error) return setMsg("No se pudo subir el archivo. Probá con uno más liviano.");
     }
-    const tipo = f.get("vivo") ? "semana" : "gratis";
+    // El selector trae "" (gratis), el id de un vivo, o "pack:YYYY-MM" (regalo del pack).
+    const destino = String(f.get("vivo") ?? "");
+    const tipo = !destino ? "gratis" : destino.startsWith("pack:") ? "pack" : "semana";
     const { error } = await sb!.from("meditaciones").insert({
-      titulo: f.get("titulo"), minutos: Number(f.get("minutos")), tipo, vivo_id: f.get("vivo") || null,
+      titulo: f.get("titulo"), minutos: Number(f.get("minutos")), tipo,
+      vivo_id: tipo === "semana" ? destino : null, mes_pack: tipo === "pack" ? destino.slice(5) : null,
       archivo: ruta, formato: archivo?.type.startsWith("video") ? "video" : "audio", publicada: f.get("publicada") === "on",
     });
     if (error) return setMsg("No se pudo guardar la meditación.");
@@ -79,10 +82,11 @@ export default function Admin() {
         <h2>Subir meditación</h2>
         <label htmlFor="m-titulo">Título</label><input id="m-titulo" name="titulo" required />
         <label htmlFor="m-min">Minutos</label><input id="m-min" name="minutos" type="number" min={1} max={45} required />
-        <label htmlFor="m-vivo">Es la corta de la semana de…</label>
+        <label htmlFor="m-vivo">¿Quién la recibe?</label>
         <select id="m-vivo" name="vivo" defaultValue="">
           <option value="">Ninguno: es gratis</option>
-          {vivos.map((v) => <option key={v.id} value={v.id}>{new Date(v.empieza).toLocaleDateString("es-AR")} · {v.titulo}</option>)}
+          {[...new Set(vivos.map((v) => v.mes))].map((mes) => <option key={mes} value={"pack:" + mes}>Regalo del pack de {nombreMes(mes)}</option>)}
+          {vivos.map((v) => <option key={v.id} value={v.id}>Corta del vivo del {new Date(v.empieza).toLocaleDateString("es-AR")} · {v.titulo}</option>)}
         </select>
         <label htmlFor="m-arch">Audio o video</label><input id="m-arch" name="archivo" type="file" accept="audio/*,video/*" />
         <label className="check"><input name="publicada" type="checkbox" defaultChecked /> Publicarla ya</label>
@@ -113,7 +117,7 @@ export default function Admin() {
           {meds.map((m) => (
             <div key={m.id} className="item">
               <span className="insignia"><span><b>{m.minutos}</b><small>min</small></span></span>
-              <span className="item-cuerpo"><span className="item-titulo">{m.titulo}</span><span className="meta">{m.tipo === "gratis" ? "Gratis" : "Corta de la semana"}{m.archivo ? "" : " · sin archivo"}</span></span>
+              <span className="item-cuerpo"><span className="item-titulo">{m.titulo}</span><span className="meta">{m.tipo === "gratis" ? "Gratis" : m.tipo === "pack" ? "Regalo del pack de " + nombreMes(m.mes_pack!) : "Corta de la semana"}{m.archivo ? "" : " · sin archivo"}</span></span>
               <button className="btn chico borde" onClick={() => publicar(m)}>{m.publicada ? "Ocultar" : "Publicar"}</button>
             </div>
           ))}

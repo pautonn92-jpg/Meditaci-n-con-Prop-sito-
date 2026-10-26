@@ -50,6 +50,9 @@ Deno.serve(async (req) => {
 
   // Repetir el aviso no duplica nada: la clave es (persona, vivo).
   await db.from("accesos").upsert(filas, { onConflict: "user_id,vivo_id", ignoreDuplicates: true });
+  if (prod === "pack") {
+    await db.from("packs_comprados").upsert({ user_id: orden.user_id, mes: ref, orden_id: orden.id }, { onConflict: "user_id,mes", ignoreDuplicates: true });
+  }
   await db.from("ordenes").update({ estado: "aprobada", mp_pago_id: pagoId }).eq("id", orden.id);
   return new Response("ok");
 });
