@@ -20,6 +20,7 @@ export default function Inicio() {
   const [sonando, setSonando] = useState<Meditacion | null>(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(true);
+  const [comprando, setComprando] = useState(false);
 
   useEffect(() => {
     cargarCatalogo().then((c) => { setVivos(c.vivos); setMeds(c.meditaciones); setPrecios(c.precios); setCargando(false); });
@@ -45,10 +46,15 @@ export default function Inicio() {
   const comprar = async (producto: string) => {
     setError("");
     if (!demo && !session) { navigate("/entrar"); return; }
+    setComprando(true);
     try {
       const destino = await crearPago(producto, vivos);
       if (destino.startsWith("http")) window.location.href = destino; else navigate(destino);
-    } catch (e) { setError((e as Error).message); }
+    } catch (e) {
+      setError((e as Error).message);
+      setComprando(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   if (cargando) return <p className="lead">Cargando…</p>;
@@ -57,6 +63,7 @@ export default function Inicio() {
     <>
       <p className="lead">Meditaciones en vivo con Reiki cada viernes, y meditaciones cortas para el resto de la semana.</p>
       {error && <p className="aviso">{error}</p>}
+      {comprando && <p className="aviso">Te estamos llevando a Mercado Pago…</p>}
 
       {vivosMes.length > 0 && (
         <section className="pack">
@@ -114,7 +121,7 @@ export default function Inicio() {
                 <span className="insignia"><span><b>{m.minutos}</b><small>min</small></span></span>
                 <span className="item-cuerpo"><span className="item-titulo">{m.titulo}</span>
                   <span className="meta">{m.tipo === "gratis" ? "Gratis" : m.tipo === "individual" ? "Grabación de un vivo con Reiki" : m.tipo === "pack" ? "Regalo del pack de " + nombreMes(m.mes_pack!) : v ? "Semana del " + dia(v.empieza).getDate() + " de " + nombreMes(v.mes) : ""}</span></span>
-                <span className={"tag " + (abierta ? "" : "candado")}>{m.tipo === "gratis" ? "Gratis" : abierta ? "Tuya" : m.tipo === "individual" ? ars(m.precio!) : "Bloqueada"}</span>
+                <span className={"tag " + (abierta ? "" : "candado")}>{m.tipo === "gratis" ? "Gratis" : abierta ? "Tuya" : m.tipo === "individual" ? "Comprar · " + ars(m.precio!) : "Bloqueada"}</span>
               </button>
             );
           })}

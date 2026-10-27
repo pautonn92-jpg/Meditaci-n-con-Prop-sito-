@@ -71,7 +71,9 @@ export async function crearPago(producto: string, vivos: Vivo[]): Promise<string
     return "/pago?demo=1";
   }
   const { data, error } = await sb!.functions.invoke("crear-pago", { body: { producto } });
-  if (error || !data?.url) throw new Error(data?.error ?? "No se pudo iniciar el pago.");
+  // Si la función responde con error, el mensaje viene en el cuerpo de la respuesta.
+  const detalle = error ? await error.context?.json?.().catch(() => null) : data;
+  if (error || !data?.url) throw new Error(detalle?.error ?? "No se pudo iniciar el pago.");
   return data.url;
 }
 
