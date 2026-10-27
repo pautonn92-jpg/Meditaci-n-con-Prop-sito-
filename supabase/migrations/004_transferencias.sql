@@ -7,7 +7,7 @@ create table public.ajustes (
 alter table public.ajustes enable row level security;
 create policy "ajustes: todos leen" on public.ajustes for select using (true);
 create policy "ajustes: admin edita" on public.ajustes for update using (is_admin()) with check (is_admin());
-insert into public.ajustes (clave) values ('alias'), ('titular');
+insert into public.ajustes (clave, valor) values ('alias', 'pautonnterapias'), ('titular', 'Paula Gisell Tonn');
 
 alter table public.ordenes add column metodo text not null default 'mp' check (metodo in ('mp', 'transferencia'));
 -- Una transferencia queda "en revisión" cuando sigue pendiente y ya tiene comprobante.
