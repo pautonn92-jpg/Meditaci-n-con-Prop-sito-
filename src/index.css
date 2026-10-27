@@ -87,6 +87,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .item-cuerpo { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .tag { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
 .comprar { display: flex; flex-direction: column; align-items: center; line-height: 1.15; font-weight: 700; font-size: .85rem; padding: 7px 14px; border-radius: 999px; background: linear-gradient(135deg, var(--gold-claro), var(--gold)); color: #2B1E3A; white-space: nowrap; }
+.calendario { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: .85rem; }
 .tag.revision { background: var(--gold-soft); color: var(--gold); }
 .compra-cabeza { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
 .compra-cabeza .precio { font-size: 1.5rem; color: var(--gold); }

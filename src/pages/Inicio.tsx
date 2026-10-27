@@ -4,6 +4,7 @@ import { useSesion } from "../App";
 import Reproductor from "../components/Reproductor";
 import { Mariposa, Meditando } from "../components/Decoracion";
 import Compra from "../components/Compra";
+import { bajarIcs, linkGoogle } from "../lib/calendario";
 import { ars, cargarAccesos, cargarCatalogo, demo, habilitada, linkDelVivo, nombreMes, type Meditacion, type Precios, type Vivo } from "../lib/api";
 
 const FILTROS = [{ id: 99, label: "Todas" }, { id: 5, label: "Hasta 5 min" }, { id: 10, label: "Hasta 10 min" }, { id: 30, label: "Hasta 30 min" }, { id: 45, label: "Hasta 45 min" }];
@@ -108,6 +109,9 @@ export default function Inicio() {
                     {corta && <span className={on ? "on" : ""}>Corta: {corta.titulo} ({corta.minutos} min)</span>}
                   </div>
                   {on && links[v.id] && <a className="btn chico" href={links[v.id]} target="_blank" rel="noreferrer">Entrar al vivo</a>}
+                  {on && <div className="calendario"><span className="meta">Recordatorio:</span>
+                    <a className="link" href={linkGoogle(v)} target="_blank" rel="noreferrer">Google Calendar</a>
+                    <button className="link" onClick={() => bajarIcs(v)}>iPhone / otro</button></div>}
                   {!on && accesos.has("rev:vivo:" + v.id) && <span className="meta">Tu transferencia está en revisión</span>}
                   {!on && !accesos.has("rev:vivo:" + v.id) && <div className="fila"><span className="precio chico">{ars(precios.vivo)}</span><button className="btn chico borde" onClick={() => comprar("vivo:" + v.id)}>Reservar este vivo</button></div>}
                 </div>
