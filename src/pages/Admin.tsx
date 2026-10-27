@@ -14,16 +14,19 @@ export default function Admin() {
   const [msg, setMsg] = useState("");
   const [revisar, setRevisar] = useState<Revision[]>([]);
   const [ajustes, setAjustes] = useState({ alias: "", titular: "" });
+  const [porMail, setPorMail] = useState<{ email: string; meditacion_id: string }[]>([]);
 
   const recargar = async () => {
-    const [v, m, p, t, a] = await Promise.all([
+    const [v, m, p, t, a, pm] = await Promise.all([
       sb!.from("vivos").select("*").order("empieza", { ascending: false }),
       sb!.from("meditaciones").select("*").order("creada", { ascending: false }),
       sb!.from("precios").select("clave, monto"),
       sb!.rpc("transferencias_por_revisar"),
       sb!.from("ajustes").select("clave, valor"),
+      sb!.from("accesos_por_mail").select("email, meditacion_id").order("email"),
     ]);
     setVivos(v.data ?? []); setMeds(m.data ?? []); setRevisar((t.data ?? []) as Revision[]);
+    setPorMail(pm.data ?? []);
     setAjustes(Object.fromEntries((a.data ?? []).map((r) => [r.clave, r.valor])) as typeof ajustes);
     setPrecios(Object.fromEntries((p.data ?? []).map((r) => [r.clave, r.monto])) as typeof precios);
   };
@@ -100,6 +103,15 @@ export default function Admin() {
     setMsg("Datos de transferencia guardados."); recargar();
   };
 
+  const darAcceso = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget, f = new FormData(form);
+    const { data, error } = await sb!.rpc("dar_acceso", { mails: String(f.get("mails") ?? ""), meditacion: f.get("med") });
+    if (error) return setMsg("No se pudo dar el acceso. Revisá los mails y probá de nuevo.");
+    form.reset(); setMsg(data ? `Listo, ${data} ${data === 1 ? "persona tiene" : "personas tienen"} acceso. Tienen que entrar a la app con ese mismo mail.` : "No encontré mails en la lista.");
+    recargar();
+  };
+
   const guardarPrecios = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
@@ -159,6 +171,22 @@ export default function Admin() {
         </div>
         <label htmlFor="v-link">Link de la videollamada (solo lo ve quien pagó)</label><input id="v-link" name="link" type="url" placeholder="https://meet.google.com/…" />
         <button className="btn">Guardar vivo</button>
+      </form>
+
+      <form className="form" onSubmit={darAcceso}>
+        <h2>Dar acceso a quien ya pagó</h2>
+        <p className="meta">Para quienes te pagaron una meditación antes de la app. Entran con ese mail y la encuentran habilitada.</p>
+        <label htmlFor="d-med">Meditación</label>
+        <select id="d-med" name="med" required>
+          {meds.filter((m) => m.tipo !== "gratis").map((m) => <option key={m.id} value={m.id}>{m.titulo}</option>)}
+        </select>
+        <label htmlFor="d-mails">Mails (uno por renglón o separados por comas)</label>
+        <textarea id="d-mails" name="mails" rows={5} required placeholder={"ana@gmail.com\nlucia@hotmail.com"} />
+        <button className="btn">Dar acceso</button>
+        {porMail.length > 0 && <details>
+          <summary className="meta">Ver a quién le diste acceso ({porMail.length})</summary>
+          <ul className="meta">{porMail.map((x) => <li key={x.email + x.meditacion_id}>{x.email} · {meds.find((m) => m.id === x.meditacion_id)?.titulo}</li>)}</ul>
+        </details>}
       </form>
 
       <form className="form" onSubmit={guardarAlias}>
