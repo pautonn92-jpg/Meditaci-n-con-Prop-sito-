@@ -128,7 +128,9 @@ export default function Inicio() {
                 <span className="insignia"><span><b>{m.minutos}</b><small>min</small></span></span>
                 <span className="item-cuerpo"><span className="item-titulo">{m.titulo}</span>
                   <span className="meta">{m.tipo === "gratis" ? "Gratis" : m.tipo === "individual" ? "Grabación de un vivo con Reiki" : m.tipo === "pack" ? "Regalo del pack de " + nombreMes(m.mes_pack!) : v ? "Semana del " + dia(v.empieza).getDate() + " de " + nombreMes(v.mes) : ""}</span></span>
-                <span className={"tag " + (abierta ? "" : "candado")}>{m.tipo === "gratis" ? "Gratis" : abierta ? "Tuya" : m.tipo === "individual" ? "Comprar · " + ars(m.precio!) : "Bloqueada"}</span>
+                {abierta || m.tipo === "gratis"
+                  ? <span className="tag">{m.tipo === "gratis" ? "Gratis" : "Tuya"}</span>
+                  : <span className="comprar">Comprar{m.tipo === "individual" && <small>{ars(m.precio!)}</small>}</span>}
               </button>
             );
           })}
