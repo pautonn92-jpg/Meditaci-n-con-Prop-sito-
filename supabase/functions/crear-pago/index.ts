@@ -59,7 +59,11 @@ Deno.serve(async (req) => {
       auto_return: "approved",
     }),
   });
-  if (!res.ok) return json({ error: "Mercado Pago no respondió. Probá de nuevo en un rato." }, 502);
+  if (!res.ok) {
+    const mp = Deno.env.get("MP_ACCESS_TOKEN") ?? "";
+    console.error("Mercado Pago rechazó la preferencia", res.status, await res.text(), `token: ${mp ? mp.slice(0, 8) + "… (" + mp.length + " caracteres)" : "NO CARGADO"}`);
+    return json({ error: "Mercado Pago no respondió. Probá de nuevo en un rato." }, 502);
+  }
   const pref = await res.json();
   return json({ url: pref.init_point });
 });
