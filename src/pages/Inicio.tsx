@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSesion } from "../App";
 import Reproductor from "../components/Reproductor";
 import { Mariposa, Meditando } from "../components/Decoracion";
+import Compra from "../components/Compra";
 import { ars, cargarAccesos, cargarCatalogo, crearPago, demo, habilitada, linkDelVivo, nombreMes, type Meditacion, type Precios, type Vivo } from "../lib/api";
 
 const FILTROS = [{ id: 99, label: "Todas" }, { id: 5, label: "Hasta 5 min" }, { id: 10, label: "Hasta 10 min" }, { id: 30, label: "Hasta 30 min" }, { id: 45, label: "Hasta 45 min" }];
@@ -22,9 +23,11 @@ export default function Inicio() {
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(true);
   const [comprando, setComprando] = useState(false);
+  const [alias, setAlias] = useState("");
+  const [compra, setCompra] = useState<{ producto: string; titulo: string; monto: number } | null>(null);
 
   useEffect(() => {
-    cargarCatalogo().then((c) => { setVivos(c.vivos); setMeds(c.meditaciones); setPrecios(c.precios); setCargando(false); });
+    cargarCatalogo().then((c) => { setVivos(c.vivos); setMeds(c.meditaciones); setPrecios(c.precios); setAlias(c.alias); setCargando(false); });
   }, []);
   useEffect(() => { cargarAccesos(session).then(setAccesos); }, [session]);
   useEffect(() => {
@@ -44,9 +47,20 @@ export default function Inicio() {
     .map((m) => ({ m, abierta: habilitada(m, accesos) }))
     .sort((a, b) => Number(b.abierta) - Number(a.abierta)), [meds, filtro, accesos]);
 
-  const comprar = async (producto: string) => {
+  // Abre la hoja de compra con el nombre y el precio de lo elegido.
+  const comprar = (producto: string) => {
     setError("");
     if (!demo && !session) { navigate("/entrar"); return; }
+    const [tipo, ref] = producto.split(":");
+    const m = meds.find((x) => x.id === ref), v = vivos.find((x) => x.id === ref);
+    const nVivos = vivos.filter((x) => x.mes === ref).length;
+    if (tipo === "med" && m) setCompra({ producto, titulo: m.titulo, monto: m.precio! });
+    else if (tipo === "vivo" && v) setCompra({ producto, titulo: "Vivo del " + dia(v.empieza).toLocaleDateString("es-AR", { day: "numeric", month: "long" }), monto: precios.vivo });
+    else if (tipo === "pack") setCompra({ producto, titulo: "Pack de " + nombreMes(ref), monto: precios.pack_por_vivo * nVivos });
+  };
+
+  const pagarConMP = async (producto: string) => {
+    setCompra(null);
     setComprando(true);
     try {
       const destino = await crearPago(producto, vivos);
@@ -82,7 +96,8 @@ export default function Inicio() {
             {regalos.map((m) => <li key={m.id}>De regalo: {m.titulo} ({m.minutos} min)</li>)}
           </ul>
           <div className="fila">
-            {tienePack ? <span className="tuyo">Ya tenés el pack de {nombreMes(mes!)}</span> : <>
+            {tienePack ? <span className="tuyo">Ya tenés el pack de {nombreMes(mes!)}</span>
+              : accesos.has("rev:pack:" + mes) ? <span className="tuyo">Tu transferencia está en revisión</span> : <>
               <span className="precio">{ars(precios.pack_por_vivo * vivosMes.length)}<s>{ars(precios.vivo * vivosMes.length)}</s></span>
               <button className="btn dorado" onClick={() => comprar("pack:" + mes)}>Comprar el pack</button>
             </>}
@@ -107,7 +122,8 @@ export default function Inicio() {
                     {corta && <span className={on ? "on" : ""}>Corta: {corta.titulo} ({corta.minutos} min)</span>}
                   </div>
                   {on && links[v.id] && <a className="btn chico" href={links[v.id]} target="_blank" rel="noreferrer">Entrar al vivo</a>}
-                  {!on && <div className="fila"><span className="precio chico">{ars(precios.vivo)}</span><button className="btn chico borde" onClick={() => comprar("vivo:" + v.id)}>Reservar este vivo</button></div>}
+                  {!on && accesos.has("rev:vivo:" + v.id) && <span className="meta">Tu transferencia está en revisión</span>}
+                  {!on && !accesos.has("rev:vivo:" + v.id) && <div className="fila"><span className="precio chico">{ars(precios.vivo)}</span><button className="btn chico borde" onClick={() => comprar("vivo:" + v.id)}>Reservar este vivo</button></div>}
                 </div>
               </div>
             );
@@ -130,6 +146,7 @@ export default function Inicio() {
                   <span className="meta">{m.tipo === "gratis" ? "Gratis" : m.tipo === "individual" ? "Grabación de un vivo con Reiki" : m.tipo === "pack" ? "Regalo del pack de " + nombreMes(m.mes_pack!) : v ? "Semana del " + dia(v.empieza).getDate() + " de " + nombreMes(v.mes) : ""}</span></span>
                 {abierta || m.tipo === "gratis"
                   ? <span className="tag">{m.tipo === "gratis" ? "Gratis" : "Tuya"}</span>
+                  : accesos.has("rev:med:" + m.id) ? <span className="tag revision">En revisión</span>
                   : <span className="comprar">Comprar{m.tipo === "individual" && <small>{ars(m.precio!)}</small>}</span>}
               </button>
             );
@@ -157,6 +174,8 @@ export default function Inicio() {
         </div>
       </section>
 
+      {compra && <Compra {...compra} hayAlias={!!alias} onMercadoPago={() => pagarConMP(compra.producto)} onCerrar={() => setCompra(null)}
+        onEnviado={() => cargarAccesos(session).then(setAccesos)} />}
       {sonando && <Reproductor med={sonando} subtitulo={sonando.tipo === "gratis" ? "Gratis" : sonando.tipo === "semana" ? "Meditación de la semana" : "Tu meditación"} onCerrar={() => setSonando(null)} />}
     </>
   );

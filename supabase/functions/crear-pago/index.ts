@@ -1,5 +1,6 @@
 // Crea una orden y una preferencia de Mercado Pago (Checkout Pro).
-// Recibe { producto: "vivo:<id>" | "pack:<YYYY-MM>" | "med:<id>" } y devuelve { url } para redirigir al pago.
+// Recibe { producto: "vivo:<id>" | "pack:<YYYY-MM>" | "med:<id>", metodo?: "transferencia" }.
+// Con Mercado Pago devuelve { url } para redirigir al pago; con transferencia, los datos del alias.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const cors = {
@@ -17,7 +18,7 @@ Deno.serve(async (req) => {
   const { data: { user } } = await admin.auth.getUser(token);
   if (!user) return json({ error: "Tenés que iniciar sesión para comprar." }, 401);
 
-  const { producto } = await req.json();
+  const { producto, metodo } = await req.json();
   const [tipo, ref] = String(producto ?? "").split(":");
   const { data: precios } = await admin.from("precios").select("clave, monto");
   const precio = (clave: string) => precios?.find((p) => p.clave === clave)?.monto ?? 0;
@@ -42,9 +43,15 @@ Deno.serve(async (req) => {
     return json({ error: "Producto inválido." }, 400);
   }
 
+  const transferencia = metodo === "transferencia";
+  const { data: ajustes } = transferencia ? await admin.from("ajustes").select("clave, valor") : { data: [] };
+  const dato = (clave: string) => ajustes?.find((a) => a.clave === clave)?.valor ?? "";
+  if (transferencia && !dato("alias")) return json({ error: "Por ahora no se puede pagar por transferencia." }, 400);
+
   const { data: orden, error } = await admin
-    .from("ordenes").insert({ user_id: user.id, producto, monto }).select("id").single();
+    .from("ordenes").insert({ user_id: user.id, producto, monto, metodo: transferencia ? "transferencia" : "mp" }).select("id").single();
   if (error) return json({ error: "No se pudo crear la orden." }, 500);
+  if (transferencia) return json({ orden: orden.id, titulo, monto, alias: dato("alias"), titular: dato("titular") });
 
   const sitio = Deno.env.get("SITIO_URL") ?? "https://meditacion-con-proposito.netlify.app";
   const res = await fetch("https://api.mercadopago.com/checkout/preferences", {

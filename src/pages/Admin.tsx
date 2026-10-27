@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useSesion } from "../App";
-import { ars, nombreMes, sb, type Meditacion, type Vivo } from "../lib/api";
+import { ars, nombreMes, sb, urlDeComprobante, type Meditacion, type Vivo } from "../lib/api";
+
+type Revision = { id: string; email: string; producto: string; monto: number; comprobante: string; creada: string };
 
 // Panel de Paula: cargar vivos, subir meditaciones y cambiar precios.
 export default function Admin() {
@@ -10,14 +12,19 @@ export default function Admin() {
   const [meds, setMeds] = useState<Meditacion[]>([]);
   const [precios, setPrecios] = useState({ vivo: 0, pack_por_vivo: 0 });
   const [msg, setMsg] = useState("");
+  const [revisar, setRevisar] = useState<Revision[]>([]);
+  const [ajustes, setAjustes] = useState({ alias: "", titular: "" });
 
   const recargar = async () => {
-    const [v, m, p] = await Promise.all([
+    const [v, m, p, t, a] = await Promise.all([
       sb!.from("vivos").select("*").order("empieza", { ascending: false }),
       sb!.from("meditaciones").select("*").order("creada", { ascending: false }),
       sb!.from("precios").select("clave, monto"),
+      sb!.rpc("transferencias_por_revisar"),
+      sb!.from("ajustes").select("clave, valor"),
     ]);
-    setVivos(v.data ?? []); setMeds(m.data ?? []);
+    setVivos(v.data ?? []); setMeds(m.data ?? []); setRevisar((t.data ?? []) as Revision[]);
+    setAjustes(Object.fromEntries((a.data ?? []).map((r) => [r.clave, r.valor])) as typeof ajustes);
     setPrecios(Object.fromEntries((p.data ?? []).map((r) => [r.clave, r.monto])) as typeof precios);
   };
 
@@ -68,6 +75,31 @@ export default function Admin() {
   const publicar = async (m: Meditacion) => {
     await sb!.from("meditaciones").update({ publicada: !m.publicada }).eq("id", m.id); recargar();
   };
+  // Qué se compró, en palabras: "Meditación: Chakra raíz", "Pack de noviembre"…
+  const queCompro = (producto: string) => {
+    const [tipo, ref] = producto.split(":");
+    if (tipo === "med") return "Meditación: " + (meds.find((m) => m.id === ref)?.titulo ?? "");
+    if (tipo === "pack") return "Pack de " + nombreMes(ref);
+    const v = vivos.find((x) => x.id === ref);
+    return "Vivo del " + (v ? new Date(v.empieza).toLocaleDateString("es-AR") : "");
+  };
+  const verComprobante = async (ruta: string) => {
+    const url = await urlDeComprobante(ruta);
+    if (url) window.open(url, "_blank"); else setMsg("No se pudo abrir el comprobante.");
+  };
+  const decidir = async (t: Revision, aprobar: boolean) => {
+    if (!aprobar && !confirm("¿Rechazar esta transferencia? La persona no va a recibir la compra.")) return;
+    const { error } = await sb!.rpc("revisar_transferencia", { orden: t.id, aprobar });
+    setMsg(error ? "No se pudo guardar. Probá de nuevo." : aprobar ? `Listo, se le habilitó a ${t.email}.` : "Transferencia rechazada.");
+    recargar();
+  };
+  const guardarAlias = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    await Promise.all(["alias", "titular"].map((c) => sb!.from("ajustes").update({ valor: String(f.get(c) ?? "").trim() }).eq("clave", c)));
+    setMsg("Datos de transferencia guardados."); recargar();
+  };
+
   const guardarPrecios = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
@@ -79,6 +111,27 @@ export default function Admin() {
     <>
       <h1>Panel</h1>
       {msg && <p className="aviso ok">{msg}</p>}
+
+      <section>
+        <h2>Transferencias por revisar</h2>
+        {revisar.length === 0 && <p className="lead">No hay transferencias esperando. Cuando alguien suba un comprobante, aparece acá.</p>}
+        <div className="lista">
+          {revisar.map((t) => (
+            <div key={t.id} className="form">
+              <b>{queCompro(t.producto)} · {ars(t.monto)}</b>
+              <span className="meta">{t.email} · {new Date(t.creada).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short", hour12: false })}</span>
+              <span className="meta">Fijate en tu Mercado Pago que haya entrado el dinero antes de aprobar.</span>
+              <div className="fila">
+                <button className="btn chico borde" onClick={() => verComprobante(t.comprobante)}>Ver comprobante</button>
+                <span className="fila">
+                  <button className="btn chico borde" onClick={() => decidir(t, false)}>Rechazar</button>
+                  <button className="btn chico dorado" onClick={() => decidir(t, true)}>Aprobar</button>
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <form className="form" onSubmit={nuevaMed}>
         <h2>Subir meditación</h2>
@@ -106,6 +159,14 @@ export default function Admin() {
         </div>
         <label htmlFor="v-link">Link de la videollamada (solo lo ve quien pagó)</label><input id="v-link" name="link" type="url" placeholder="https://meet.google.com/…" />
         <button className="btn">Guardar vivo</button>
+      </form>
+
+      <form className="form" onSubmit={guardarAlias}>
+        <h2>Pago por transferencia</h2>
+        <p className="meta">Si dejás el alias vacío, la opción de transferir no aparece.</p>
+        <label htmlFor="a-alias">Tu alias</label><input id="a-alias" name="alias" key={"c" + ajustes.alias} defaultValue={ajustes.alias} placeholder="tu.alias.mp" />
+        <label htmlFor="a-tit">A nombre de</label><input id="a-tit" name="titular" key={"d" + ajustes.titular} defaultValue={ajustes.titular} placeholder="Paula Tonn" />
+        <button className="btn">Guardar</button>
       </form>
 
       <form className="form" onSubmit={guardarPrecios}>
