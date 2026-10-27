@@ -167,7 +167,7 @@ export default function Admin() {
         <label htmlFor="v-titulo">Título</label><input id="v-titulo" name="titulo" required />
         <div className="fila">
           <div><label htmlFor="v-fecha">Fecha</label><input id="v-fecha" name="fecha" type="date" required /></div>
-          <div><label htmlFor="v-hora">Hora</label><input id="v-hora" name="hora" type="time" defaultValue="20:00" required /></div>
+          <div><label htmlFor="v-hora">Hora</label><input id="v-hora" name="hora" type="time" defaultValue="19:00" required /></div>
         </div>
         <label htmlFor="v-link">Link de la videollamada (solo lo ve quien pagó)</label><input id="v-link" name="link" type="url" placeholder="https://meet.google.com/…" />
         <button className="btn">Guardar vivo</button>

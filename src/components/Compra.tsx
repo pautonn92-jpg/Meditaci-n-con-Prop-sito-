@@ -1,19 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSesion } from "../App";
 import { ars, enviarComprobante, iniciarTransferencia, type Transferencia } from "../lib/api";
 import { Mariposa } from "./Decoracion";
 
 type Props = {
   producto: string; titulo: string; monto: number; hayAlias: boolean;
-  onMercadoPago: () => void; onCerrar: () => void; onEnviado: () => void;
+  onCerrar: () => void; onEnviado: () => void;
 };
 
-// Hoja para elegir cómo pagar: Mercado Pago (al instante) o transferencia al alias (Paula la aprueba).
-export default function Compra({ producto, titulo, monto, hayAlias, onMercadoPago, onCerrar, onEnviado }: Props) {
+// Hoja de compra: transferencia al alias, se sube el comprobante y Paula la aprueba en el Panel.
+export default function Compra({ producto, titulo, monto, hayAlias, onCerrar, onEnviado }: Props) {
   const session = useSesion();
   const [datos, setDatos] = useState<Transferencia | null>(null);
   const [archivo, setArchivo] = useState<File | null>(null);
-  const [paso, setPaso] = useState<"elegir" | "transferir" | "listo">("elegir");
+  const [paso, setPaso] = useState<"preparando" | "transferir" | "listo">("preparando");
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState("");
   const [copiado, setCopiado] = useState(false);
@@ -24,6 +24,10 @@ export default function Compra({ producto, titulo, monto, hayAlias, onMercadoPag
     catch (e) { setError((e as Error).message); }
     setOcupado(false);
   };
+
+  useEffect(() => {
+    if (hayAlias) transferir(); else setError("Por ahora no se puede comprar. Escribile a Paula.");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const copiar = async () => {
     try { await navigator.clipboard.writeText(datos!.alias); setCopiado(true); setTimeout(() => setCopiado(false), 2000); } catch { /* sin portapapeles */ }
@@ -49,16 +53,7 @@ export default function Compra({ producto, titulo, monto, hayAlias, onMercadoPag
         </div>
         {error && <p className="aviso">{error}</p>}
 
-        {paso === "elegir" && <div className="opciones">
-          <button className="opcion" onClick={onMercadoPago} disabled={ocupado}>
-            <b>Pagar con Mercado Pago</b>
-            <span className="meta">Tarjeta, débito o dinero en cuenta. Se habilita al instante.</span>
-          </button>
-          {hayAlias && <button className="opcion" onClick={transferir} disabled={ocupado}>
-            <b>Transferir a mi alias</b>
-            <span className="meta">Desde tu banco o billetera. Subís el comprobante y se habilita cuando Paula lo confirma.</span>
-          </button>}
-        </div>}
+        {paso === "preparando" && !error && <p className="lead" style={{ textAlign: "center" }}>Preparando los datos para transferir…</p>}
 
         {paso === "transferir" && datos && <div className="opciones">
           <div className="alias">

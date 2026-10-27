@@ -4,10 +4,11 @@ import { useSesion } from "../App";
 import Reproductor from "../components/Reproductor";
 import { Mariposa, Meditando } from "../components/Decoracion";
 import Compra from "../components/Compra";
-import { ars, cargarAccesos, cargarCatalogo, crearPago, demo, habilitada, linkDelVivo, nombreMes, type Meditacion, type Precios, type Vivo } from "../lib/api";
+import { ars, cargarAccesos, cargarCatalogo, demo, habilitada, linkDelVivo, nombreMes, type Meditacion, type Precios, type Vivo } from "../lib/api";
 
 const FILTROS = [{ id: 99, label: "Todas" }, { id: 5, label: "Hasta 5 min" }, { id: 10, label: "Hasta 10 min" }, { id: 30, label: "Hasta 30 min" }, { id: 45, label: "Hasta 45 min" }];
 const dia = (iso: string) => new Date(iso);
+const fechaAR = (iso: string, o: Intl.DateTimeFormatOptions) => dia(iso).toLocaleDateString("es-AR", { ...o, timeZone: "America/Argentina/Buenos_Aires" });
 const hora = (iso: string) => dia(iso).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Argentina/Buenos_Aires" });
 
 export default function Inicio() {
@@ -22,7 +23,6 @@ export default function Inicio() {
   const [sonando, setSonando] = useState<Meditacion | null>(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(true);
-  const [comprando, setComprando] = useState(false);
   const [alias, setAlias] = useState("");
   const [compra, setCompra] = useState<{ producto: string; titulo: string; monto: number } | null>(null);
 
@@ -55,21 +55,8 @@ export default function Inicio() {
     const m = meds.find((x) => x.id === ref), v = vivos.find((x) => x.id === ref);
     const nVivos = vivos.filter((x) => x.mes === ref).length;
     if (tipo === "med" && m) setCompra({ producto, titulo: m.titulo, monto: m.precio! });
-    else if (tipo === "vivo" && v) setCompra({ producto, titulo: "Vivo del " + dia(v.empieza).toLocaleDateString("es-AR", { day: "numeric", month: "long" }), monto: precios.vivo });
+    else if (tipo === "vivo" && v) setCompra({ producto, titulo: "Vivo del " + fechaAR(v.empieza, { weekday: "long", day: "numeric", month: "long" }), monto: precios.vivo });
     else if (tipo === "pack") setCompra({ producto, titulo: "Pack de " + nombreMes(ref), monto: precios.pack_por_vivo * nVivos });
-  };
-
-  const pagarConMP = async (producto: string) => {
-    setCompra(null);
-    setComprando(true);
-    try {
-      const destino = await crearPago(producto, vivos);
-      if (destino.startsWith("http")) window.location.href = destino; else navigate(destino);
-    } catch (e) {
-      setError((e as Error).message);
-      setComprando(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
   };
 
   if (cargando) return <p className="lead">Cargando…</p>;
@@ -80,10 +67,9 @@ export default function Inicio() {
         <img src="/logo.webp" alt="Paula Tonn" className="logo" width="320" height="317" />
         <Mariposa className="vuela uno" tam={26} />
         <Mariposa className="vuela dos" tam={18} />
-        <p className="lead">Meditaciones en vivo con Reiki cada viernes, y meditaciones grabadas para acompañarte el resto de la semana.</p>
+        <p className="lead">Meditaciones en vivo con Reiki los viernes y domingos, y meditaciones grabadas para acompañarte el resto de la semana.</p>
       </section>
       {error && <p className="aviso">{error}</p>}
-      {comprando && <p className="aviso">Te estamos llevando a Mercado Pago…</p>}
 
       {vivosMes.length > 0 && (
         <section className="pack">
@@ -91,7 +77,7 @@ export default function Inicio() {
           <h2>Todo el mes en calma</h2>
           <Meditando className="pack-figura" tam={96} />
           <ul>
-            <li>Los {vivosMes.length} vivos de los viernes, con Reiki mientras meditás</li>
+            <li>Los {vivosMes.length} vivos del mes, con Reiki mientras meditás</li>
             <li>La meditación corta de cada semana, para siempre</li>
             {regalos.map((m) => <li key={m.id}>De regalo: {m.titulo} ({m.minutos} min)</li>)}
           </ul>
@@ -114,7 +100,7 @@ export default function Inicio() {
             const corta = meds.find((m) => m.vivo_id === v.id);
             return (
               <div className="semana" key={v.id}>
-                <div className="fecha"><small>vie</small><b>{dia(v.empieza).getDate()}</b><small>{dia(v.empieza).toLocaleDateString("es-AR", { month: "short" })}</small></div>
+                <div className="fecha"><small>{fechaAR(v.empieza, { weekday: "short" }).replace(".", "")}</small><b>{fechaAR(v.empieza, { day: "numeric" })}</b><small>{fechaAR(v.empieza, { month: "short" }).replace(".", "")}</small></div>
                 <div className="semana-cuerpo">
                   <div><div className="semana-titulo">{v.titulo}</div><div className="meta">{hora(v.empieza)} h · {v.duracion_min} min en vivo · Reiki</div></div>
                   <div className="accesos">
@@ -174,7 +160,7 @@ export default function Inicio() {
         </div>
       </section>
 
-      {compra && <Compra {...compra} hayAlias={!!alias} onMercadoPago={() => pagarConMP(compra.producto)} onCerrar={() => setCompra(null)}
+      {compra && <Compra {...compra} hayAlias={!!alias} onCerrar={() => setCompra(null)}
         onEnviado={() => cargarAccesos(session).then(setAccesos)} />}
       {sonando && <Reproductor med={sonando} subtitulo={sonando.tipo === "gratis" ? "Gratis" : sonando.tipo === "semana" ? "Meditación de la semana" : "Tu meditación"} onCerrar={() => setSonando(null)} />}
     </>

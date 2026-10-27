@@ -7,7 +7,7 @@ export default function Pago() {
   const estado = q.get("demo") ? "approved" : q.get("status") ?? q.get("collection_status");
 
   const texto = estado === "approved"
-    ? { t: "¡Pago aprobado!", d: "Ya se habilitaron tus vivos y sus meditaciones cortas. El link de cada vivo aparece en la tarjeta del viernes." }
+    ? { t: "¡Pago aprobado!", d: "Ya se habilitaron tus vivos y sus meditaciones cortas. El link de cada vivo aparece en la tarjeta de cada vivo." }
     : estado === "pending" || estado === "in_process"
     ? { t: "Pago en proceso", d: "Mercado Pago todavía lo está confirmando. Apenas se apruebe, se habilita solo." }
     : { t: "El pago no se completó", d: "No se te cobró nada. Podés intentarlo de nuevo cuando quieras." };

@@ -16,9 +16,8 @@ const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 export const demo = !url || !key;
 export const sb = demo ? null : createClient(url!, key!);
 
-const DEMO_VIVOS: Vivo[] = [6, 13, 20, 27].map((d, i) => ({
-  id: "v" + i, mes: "2026-11", duracion_min: 40, titulo: "Meditación en vivo con Reiki",
-  empieza: `2026-11-${String(d).padStart(2, "0")}T22:00:00Z`,
+const DEMO_VIVOS: Vivo[] = ["2026-11-09T00:00:00Z", "2026-11-13T22:00:00Z", "2026-11-23T00:00:00Z", "2026-11-27T22:00:00Z"].map((empieza, i) => ({
+  id: "v" + i, mes: "2026-11", duracion_min: 40, titulo: "Meditación en vivo con Reiki", empieza,
 }));
 const DEMO_MEDS: Meditacion[] = ([
   ["Limpieza energética", 37, "gratis", null], ["Activación del chakra raíz", 34, "individual", 20000], ["Activación del chakra sacro", 47, "individual", 25000],
