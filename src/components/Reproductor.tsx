@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { urlDeArchivo, type Meditacion } from "../lib/api";
+import { Meditando } from "./Decoracion";
 
 const fmt = (s: number) => {
   s = Math.max(0, Math.round(s));
@@ -61,7 +62,7 @@ export default function Reproductor({ med, subtitulo, onCerrar }: { med: Meditac
         </div>
         {med.formato === "video" && src
           ? <video {...props} className="video" />
-          : <div className="resp-caja"><div className={"resp " + (sonando ? (inhala ? "in" : "out") : "")}><span>{cargando ? "Cargando" : sonando ? (inhala ? "Inhalá" : "Exhalá") : t >= dur - 1 ? "Gracias" : "Listo"}</span></div>{src && <audio {...props} />}</div>}
+          : <div className="resp-caja"><div className={"resp " + (sonando ? (inhala ? "in" : "out") : "")}><Meditando tam={92} /><span>{cargando ? "Cargando" : sonando ? (inhala ? "Inhalá" : "Exhalá") : t >= dur - 1 ? "Gracias" : "Listo"}</span></div>{src && <audio {...props} />}</div>}
         <div>
           <div className="barra"><i style={{ width: (t / dur) * 100 + "%" }} /></div>
           <div className="tiempos"><span>{fmt(t)}</span><span>-{fmt(dur - t)}</span></div>

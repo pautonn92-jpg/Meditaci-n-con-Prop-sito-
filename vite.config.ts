@@ -14,8 +14,8 @@ export default defineConfig({
         lang: 'es-AR',
         start_url: '/',
         display: 'standalone',
-        background_color: '#EEF1F0',
-        theme_color: '#3E6B66',
+        background_color: '#FBF7F2',
+        theme_color: '#6B3FA0',
         icons: [
           { src: '/icono-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icono-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },

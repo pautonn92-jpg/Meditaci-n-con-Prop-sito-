@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSesion } from "../App";
 import Reproductor from "../components/Reproductor";
+import { Mariposa, Meditando } from "../components/Decoracion";
 import { ars, cargarAccesos, cargarCatalogo, crearPago, demo, habilitada, linkDelVivo, nombreMes, type Meditacion, type Precios, type Vivo } from "../lib/api";
 
 const FILTROS = [{ id: 99, label: "Todas" }, { id: 5, label: "Hasta 5 min" }, { id: 10, label: "Hasta 10 min" }, { id: 30, label: "Hasta 30 min" }, { id: 45, label: "Hasta 45 min" }];
@@ -61,7 +62,12 @@ export default function Inicio() {
 
   return (
     <>
-      <p className="lead">Meditaciones en vivo con Reiki cada viernes, y meditaciones cortas para el resto de la semana.</p>
+      <section className="portada">
+        <img src="/logo.webp" alt="Paula Tonn" className="logo" width="320" height="317" />
+        <Mariposa className="vuela uno" tam={26} />
+        <Mariposa className="vuela dos" tam={18} />
+        <p className="lead">Meditaciones en vivo con Reiki cada viernes, y meditaciones grabadas para acompañarte el resto de la semana.</p>
+      </section>
       {error && <p className="aviso">{error}</p>}
       {comprando && <p className="aviso">Te estamos llevando a Mercado Pago…</p>}
 
@@ -69,6 +75,7 @@ export default function Inicio() {
         <section className="pack">
           <span className="eyebrow">Pack de {nombreMes(mes!)}</span>
           <h2>Todo el mes en calma</h2>
+          <Meditando className="pack-figura" tam={96} />
           <ul>
             <li>Los {vivosMes.length} vivos de los viernes, con Reiki mientras meditás</li>
             <li>La meditación corta de cada semana, para siempre</li>
@@ -84,7 +91,7 @@ export default function Inicio() {
       )}
 
       <section>
-        <h2>Vivos de {nombreMes(mes ?? "2026-01")}</h2>
+        <h2 className="titulo-ala"><Mariposa tam={22} />Vivos de {nombreMes(mes ?? "2026-01")}</h2>
         {vivosMes.length === 0 && <p className="lead">Todavía no hay vivos cargados para este mes.</p>}
         <div className="semanas">
           {vivosMes.map((v) => {
@@ -109,7 +116,7 @@ export default function Inicio() {
       </section>
 
       <section>
-        <h2>Mis meditaciones</h2>
+        <h2 className="titulo-ala"><Mariposa tam={22} />Mis meditaciones</h2>
         <div className="chips">
           {FILTROS.map((f) => <button key={f.id} className="chip" aria-pressed={filtro === f.id} onClick={() => setFiltro(f.id)}>{f.label}</button>)}
         </div>
@@ -126,6 +133,16 @@ export default function Inicio() {
             );
           })}
           {lista.length === 0 && <p className="lead">No hay meditaciones de ese largo todavía.</p>}
+        </div>
+      </section>
+
+      <section className="sobre-mi">
+        <img src="/paula.jpg" alt="Paula Tonn" className="foto" width="400" height="551" loading="lazy" />
+        <div className="sobre-texto">
+          <span className="eyebrow">Quién te acompaña</span>
+          <h2>Hola, soy Paula</h2>
+          <p>Guío meditaciones para que cierres la semana en calma, y durante cada vivo te envío Reiki a distancia mientras meditás.</p>
+          <Mariposa tam={24} />
         </div>
       </section>
 

@@ -31,7 +31,7 @@ export default function App() {
       <BrowserRouter>
         <div className="app">
           <header className="arriba">
-            <Link to="/" className="marca">Meditación con propósito</Link>
+            <Link to="/" className="marca"><img src="/icono-64.png" alt="" width="36" height="36" /><span>Meditación<small>con propósito</small></span></Link>
             {demo ? <span className="meta">Demostración</span>
               : session ? <span className="fila">{esAdmin && <Link to="/admin" className="link">Panel</Link>}<button className="link" onClick={() => sb!.auth.signOut()}>Salir</button></span>
               : <Link to="/entrar" className="link">Entrar</Link>}
