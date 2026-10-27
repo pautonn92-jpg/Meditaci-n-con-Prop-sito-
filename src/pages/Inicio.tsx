@@ -140,8 +140,17 @@ export default function Inicio() {
         <img src="/paula.jpg" alt="Paula Tonn" className="foto" width="400" height="551" loading="lazy" />
         <div className="sobre-texto">
           <span className="eyebrow">Quién te acompaña</span>
-          <h2>Hola, soy Paula</h2>
-          <p>Guío meditaciones para que cierres la semana en calma, y durante cada vivo te envío Reiki a distancia mientras meditás.</p>
+          <h2>Hola, soy Pau Tonn</h2>
+          <p>Soy terapeuta holística y brindo diferentes servicios:</p>
+          <p>Soy máster Reiki Usui desde hace 12 años. Doy la formación en este sistema de Reiki (nivel 1, 2, 3 y maestría), brindo sesiones de Reiki Usui y radiestesia. Soy practicante certificada de Barras de Access, Facelift Energético de Access y procesos de cuerpo. También doy la clase de Barras de Access®, ya que soy facilitadora certificada de la clase de Barras de Access®.</p>
+          <p>Soy terapeuta en péndulo hebreo método Meraki, también soy lectora de registros akáshicos de Símbolos de Luz y sanadora cósmica del mismo sistema.</p>
+          <p>Soy mamá, esposa, hija, hermana y amiga.</p>
+          <p>Mi misión es acompañar a las personas en sus procesos mediante la facilitación de consciencia y la armonización energética. Como así también ayudándoles a conectar con sus guías y maestros espirituales, con su sabiduría akáshica y con su propia luz. Mi meta es que cada persona que llegue a mí se vaya con mayor consciencia y empoderamiento del que tenía cuando llegó.</p>
+          <p className="firma">¿Qué más es posible?<br />Gracias por estar aquí y elegirme.</p>
+          <div className="agenda">
+            <p>Si querés tener una sesión conmigo, podés acceder a mi agenda aquí:</p>
+            <a className="btn dorado" href="https://turnosconqr.com/app/paulatonnterapiasholisticas" target="_blank" rel="noreferrer">Reservar una sesión</a>
+          </div>
           <Mariposa tam={24} />
         </div>
       </section>

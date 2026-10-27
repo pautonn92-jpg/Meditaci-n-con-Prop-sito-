@@ -39,11 +39,13 @@ h2 { color: var(--accent); }
 .vuela.uno { top: 12%; left: 4%; }
 .vuela.dos { top: 52%; right: 6%; animation-delay: -3s; }
 @keyframes vuelo { 0%, 100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(-10px) rotate(6deg); } }
-.sobre-mi { flex-direction: row; align-items: center; gap: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 16px; }
-.sobre-mi .foto { width: 112px; height: auto; flex: none; border-radius: 999px 999px 18px 18px; border: 2px solid var(--gold-claro); object-fit: cover; }
-.sobre-texto { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.sobre-texto .mariposa { align-self: flex-end; }
-@media (max-width: 360px) { .sobre-mi { flex-direction: column; text-align: center; } .sobre-texto .mariposa { align-self: center; } }
+.sobre-mi { align-items: center; gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 20px 18px; }
+.sobre-mi .foto { width: 150px; height: auto; flex: none; border-radius: 999px 999px 18px 18px; border: 2px solid var(--gold-claro); object-fit: cover; }
+.sobre-texto { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.sobre-texto .eyebrow, .sobre-texto h2 { text-align: center; }
+.firma { font-family: var(--display); font-style: italic; font-size: 1.2rem; color: var(--accent); text-align: center; }
+.agenda { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; background: var(--gold-soft); border-radius: 16px; padding: 14px; }
+.sobre-texto .mariposa { align-self: center; }
 button { font: inherit; color: inherit; cursor: pointer; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .link { border: 0; background: none; color: var(--accent); font-weight: 700; padding: 0; text-decoration: underline; }
