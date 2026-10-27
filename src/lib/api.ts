@@ -17,21 +17,18 @@ export const demo = !url || !key;
 export const sb = demo ? null : createClient(url!, key!);
 
 const DEMO_VIVOS: Vivo[] = [6, 13, 20, 27].map((d, i) => ({
-  id: "v" + i, mes: "2026-11", duracion_min: 40,
-  empieza: `2026-11-${String(d).padStart(2, "0")}T23:00:00Z`,
-  titulo: ["Soltar lo que pesa", "Agradecer lo simple", "Descanso profundo", "Volver a mí"][i],
+  id: "v" + i, mes: "2026-11", duracion_min: 40, titulo: "Meditación en vivo con Reiki",
+  empieza: `2026-11-${String(d).padStart(2, "0")}T22:00:00Z`,
 }));
-const DEMO_MEDS: Meditacion[] = [
-  ["Limpieza energética", 38, "gratis", null], ["Chakra raíz", 34, "individual", null], ["Chakra sacro", 35, "individual", null], ["Tres respiraciones de gratitud", 5, "semana", "v1"],
-  ["Cuerpo liviano para dormir", 10, "semana", "v2"], ["Hablarme con cariño", 10, "semana", "v3"],
-].map(([titulo, minutos, tipo, vivo_id], i) => ({
-  id: "m" + i, titulo: titulo as string, minutos: minutos as number, tipo: tipo as Meditacion["tipo"],
-  vivo_id: tipo === "pack" ? null : (vivo_id as string | null), mes_pack: tipo === "pack" ? (vivo_id as string) : null, precio: tipo === "individual" ? 10000 : null, descripcion: null, archivo: null, formato: "audio", publicada: true,
+const DEMO_MEDS: Meditacion[] = ([
+  ["Limpieza energética", 37, "gratis", null], ["Activación del chakra raíz", 34, "individual", 20000], ["Activación del chakra sacro", 47, "individual", 25000],
+] as const).map(([titulo, minutos, tipo, precio], i) => ({
+  id: "m" + i, titulo, minutos, tipo, vivo_id: null, mes_pack: null, precio, descripcion: null, archivo: null, formato: "audio", publicada: true,
 }));
 const demoAccesos = new Set<string>();
 
 export async function cargarCatalogo() {
-  if (demo) return { vivos: DEMO_VIVOS, meditaciones: DEMO_MEDS, precios: { vivo: 25000, pack_por_vivo: 20000 }, alias: "paula.tonn.mp" };
+  if (demo) return { vivos: DEMO_VIVOS, meditaciones: DEMO_MEDS, precios: { vivo: 25000, pack_por_vivo: 20000 }, alias: "pautonnterapias" };
   const [v, m, p, a] = await Promise.all([
     sb!.from("vivos").select("*").gte("empieza", new Date(Date.now() - 45 * 864e5).toISOString()).order("empieza"),
     sb!.from("meditaciones").select("*").eq("publicada", true).order("creada"),
@@ -84,7 +81,7 @@ export async function crearPago(producto: string, vivos: Vivo[]): Promise<string
 
 // Crea la orden por transferencia y devuelve el alias y el monto a transferir.
 export async function iniciarTransferencia(producto: string, titulo: string, monto: number): Promise<Transferencia> {
-  if (demo) return { orden: "demo", titulo, monto, alias: "paula.tonn.mp", titular: "Paula Tonn" };
+  if (demo) return { orden: "demo", titulo, monto, alias: "pautonnterapias", titular: "Paula Gisell Tonn" };
   const { data, error } = await sb!.functions.invoke("crear-pago", { body: { producto, metodo: "transferencia" } });
   const detalle = error ? await error.context?.json?.().catch(() => null) : data;
   if (error || !data?.orden) throw new Error(detalle?.error ?? "No se pudo preparar la transferencia.");
